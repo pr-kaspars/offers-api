@@ -22,7 +22,7 @@ public class TradeService {
     this.offerRepository = offerRepository;
   }
 
-  public Offer listOffer(OfferPayload payload) {
+  public Listing list(OfferPayload payload) {
     Offer offer = new Offer();
     offer.setName(payload.getName());
     offer.setDescription(payload.getDescription());
@@ -31,11 +31,9 @@ public class TradeService {
     offer = offerRepository.save(offer);
 
     Listing listing = new Listing();
-    listing.setOfferId(offer.getId());
+    listing.setOffer(offer);
     listing.setExpires(LocalDate.now().plusDays(payload.getDuration()));
     listing.setState(Listing.State.ACTIVE);
-    listingRepository.save(listing);
-
-    return offer;
+    return listingRepository.save(listing);
   }
 }

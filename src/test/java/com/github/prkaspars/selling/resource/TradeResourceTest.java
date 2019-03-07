@@ -1,6 +1,7 @@
 package com.github.prkaspars.selling.resource;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.prkaspars.selling.model.Listing;
 import com.github.prkaspars.selling.model.Offer;
 import com.github.prkaspars.selling.request.OfferPayload;
 import com.github.prkaspars.selling.service.TradeService;
@@ -16,6 +17,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Currency;
 
+import static java.time.LocalDate.now;
+import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -35,15 +38,20 @@ public class TradeResourceTest {
 
   @Test
   public void createShouldCreateListingAndOffer() throws Exception {
-    when(tradeService.listOffer(any(OfferPayload.class)))
+    when(tradeService.list(any(OfferPayload.class)))
       .thenAnswer(a -> {
         OfferPayload in = a.getArgument(0);
-        Offer out = new Offer();
+        Offer o = new Offer();
+        o.setId(99);
+        o.setName(in.getName());
+        o.setDescription(in.getDescription());
+        o.setCurrency(Currency.getInstance(in.getCurrency()));
+        o.setPrice(in.getPrice());
+        Listing out = new Listing();
         out.setId(123);
-        out.setName(in.getName());
-        out.setDescription(in.getDescription());
-        out.setCurrency(Currency.getInstance(in.getCurrency()));
-        out.setPrice(in.getPrice());
+        out.setState(Listing.State.ACTIVE);
+        out.setExpires(now().plusDays(in.getDuration()));
+        out.setOffer(o);
         return out;
       });
 
@@ -59,13 +67,15 @@ public class TradeResourceTest {
         post("/listings")
           .content(objectMapper.writeValueAsBytes(payload))
           .contentType(MediaType.APPLICATION_JSON))
+      .andDo(print())
       .andExpect(status().isCreated())
       .andExpect(header().string(HttpHeaders.LOCATION, "http://localhost/listings/123"))
       .andExpect(jsonPath("$.id").value(123))
       .andExpect(jsonPath("$.name").value("Foo"))
       .andExpect(jsonPath("$.description").value("Lorem ipsum"))
       .andExpect(jsonPath("$.currency").value("GBP"))
-      .andExpect(jsonPath("$.price").value(89.99));
+      .andExpect(jsonPath("$.price").value(89.99))
+      .andExpect(jsonPath("$.expires").value(now().plusDays(17).format(ISO_LOCAL_DATE)));
   }
 
   @Test
@@ -85,6 +95,6 @@ public class TradeResourceTest {
       .andExpect(header().doesNotExist(HttpHeaders.LOCATION))
       .andExpect(jsonPath("$.failures.length()").value(5));
 
-    verify(tradeService, times(0)).listOffer(any());
+    verify(tradeService, times(0)).list(any());
   }
 }

@@ -1,9 +1,6 @@
 package com.github.prkaspars.selling.model;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
 import java.time.LocalDate;
 
 @Entity
@@ -15,19 +12,11 @@ public class Listing {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
   private Integer id;
-  private Integer offerId;
+  @OneToOne
+  @JoinColumn
+  private Offer offer;
   private LocalDate expires;
   private State state;
-
-  public Listing() {
-  }
-
-  public Listing(Integer id, Integer offerId, LocalDate expires, State state) {
-    this.id = id;
-    this.offerId = offerId;
-    this.expires = expires;
-    this.state = state;
-  }
 
   public Integer getId() {
     return id;
@@ -37,12 +26,12 @@ public class Listing {
     this.id = id;
   }
 
-  public Integer getOfferId() {
-    return offerId;
+  public Offer getOffer() {
+    return offer;
   }
 
-  public void setOfferId(Integer offerId) {
-    this.offerId = offerId;
+  public void setOffer(Offer offer) {
+    this.offer = offer;
   }
 
   public LocalDate getExpires() {

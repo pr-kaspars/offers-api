@@ -1,17 +1,29 @@
-package com.github.prkaspars.selling.model;
+package com.github.prkaspars.selling.response;
 
-import javax.persistence.*;
+import com.github.prkaspars.selling.model.Listing;
+
+import java.time.LocalDate;
 import java.util.Currency;
 
-@Entity
-public class Offer implements Cloneable {
-  @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
+public class ListingResponse {
   private Integer id;
   private String name;
   private String description;
   private Currency currency;
   private Double price;
+  private LocalDate expires;
+
+  public ListingResponse() {
+  }
+
+  public ListingResponse(Listing listing) {
+    id = listing.getId();
+    name = listing.getOffer().getName();
+    description = listing.getOffer().getDescription();
+    currency = listing.getOffer().getCurrency();
+    price = listing.getOffer().getPrice();
+    expires = listing.getExpires();
+  }
 
   public Integer getId() {
     return id;
@@ -51,5 +63,13 @@ public class Offer implements Cloneable {
 
   public void setPrice(Double price) {
     this.price = price;
+  }
+
+  public LocalDate getExpires() {
+    return expires;
+  }
+
+  public void setExpires(LocalDate expires) {
+    this.expires = expires;
   }
 }

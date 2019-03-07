@@ -51,7 +51,7 @@ public class TradeServiceTest {
     payload.setDuration(17);
 
     TradeService service = new TradeService(listingRepository, offerRepository);
-    service.listOffer(payload);
+    service.list(payload);
 
     verify(listingRepository, times(1)).save(listingArgumentCaptor.capture());
     verify(offerRepository, times(1)).save(offerArgumentCaptor.capture());
@@ -65,7 +65,7 @@ public class TradeServiceTest {
 
     Listing listing = listingArgumentCaptor.getValue();
     assertNull(listing.getId());
-    assertEquals(Integer.valueOf(123), listing.getOfferId());
+    assertEquals(Integer.valueOf(123), listing.getOffer().getId());
     assertEquals(LocalDate.now().plusDays(17), listing.getExpires());
     assertEquals(Listing.State.ACTIVE, listing.getState());
   }
