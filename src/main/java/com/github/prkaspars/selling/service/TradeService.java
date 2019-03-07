@@ -8,8 +8,10 @@ import com.github.prkaspars.selling.request.OfferPayload;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.util.Currency;
+import java.util.Optional;
+
+import static java.time.LocalDate.now;
 
 @Service
 public class TradeService {
@@ -32,8 +34,13 @@ public class TradeService {
 
     Listing listing = new Listing();
     listing.setOffer(offer);
-    listing.setExpires(LocalDate.now().plusDays(payload.getDuration()));
+    listing.setExpires(now().plusDays(payload.getDuration()));
     listing.setState(Listing.State.ACTIVE);
     return listingRepository.save(listing);
+  }
+
+  public Optional<Listing> read(Integer id) {
+    return listingRepository.findById(id)
+      .filter(l -> l.getState() == Listing.State.ACTIVE && l.getExpires().isAfter(now()));
   }
 }

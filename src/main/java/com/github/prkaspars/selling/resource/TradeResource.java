@@ -7,14 +7,12 @@ import com.github.prkaspars.selling.service.TradeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.util.Optional;
 
 @RestController
 public class TradeResource {
@@ -32,5 +30,10 @@ public class TradeResource {
     String location = uriComponentsBuilder.path("/listings/{id}").buildAndExpand(listing.getId()).toUri().toString();
     response.addHeader(HttpHeaders.LOCATION, location);
     return new ListingResponse(listing);
+  }
+
+  @GetMapping("/listings/{id}")
+  public Optional<ListingResponse> read(@PathVariable Integer id) {
+    return tradeService.read(id).map(ListingResponse::new);
   }
 }

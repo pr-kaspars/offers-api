@@ -15,12 +15,15 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDate;
 import java.util.Currency;
+import java.util.Optional;
 
 import static java.time.LocalDate.now;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -67,7 +70,6 @@ public class TradeResourceTest {
         post("/listings")
           .content(objectMapper.writeValueAsBytes(payload))
           .contentType(MediaType.APPLICATION_JSON))
-      .andDo(print())
       .andExpect(status().isCreated())
       .andExpect(header().string(HttpHeaders.LOCATION, "http://localhost/listings/123"))
       .andExpect(jsonPath("$.id").value(123))
@@ -96,5 +98,43 @@ public class TradeResourceTest {
       .andExpect(jsonPath("$.failures.length()").value(5));
 
     verify(tradeService, times(0)).list(any());
+  }
+
+  @Test
+  public void readShouldRespondWithListing() throws Exception {
+    Offer offer = new Offer();
+    offer.setName("Foo");
+    offer.setDescription("Lorem ipsum");
+    offer.setCurrency(Currency.getInstance("GBP"));
+    offer.setPrice(89.99);
+
+    Listing listing = new Listing();
+    listing.setId(123);
+    listing.setOffer(offer);
+    listing.setState(Listing.State.ACTIVE);
+    listing.setExpires(LocalDate.now().plusDays(12));
+
+    when(tradeService.read(123))
+      .thenReturn(Optional.of(listing));
+
+    mockMvc
+      .perform(get("/listings/123"))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.id").value(123))
+      .andExpect(jsonPath("$.name").value("Foo"))
+      .andExpect(jsonPath("$.description").value("Lorem ipsum"))
+      .andExpect(jsonPath("$.currency").value("GBP"))
+      .andExpect(jsonPath("$.price").value(89.99))
+      .andExpect(jsonPath("$.expires").value(now().plusDays(12).format(ISO_LOCAL_DATE)));
+  }
+
+  @Test
+  public void readShouldRespondWithNotFound() throws Exception {
+    when(tradeService.read(123))
+      .thenReturn(Optional.empty());
+
+    mockMvc
+      .perform(get("/listings/123"))
+      .andExpect(status().isNotFound());
   }
 }

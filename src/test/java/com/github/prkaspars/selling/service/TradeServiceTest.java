@@ -11,6 +11,7 @@ import org.mockito.ArgumentCaptor;
 
 import java.time.LocalDate;
 import java.util.Currency;
+import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -68,5 +69,46 @@ public class TradeServiceTest {
     assertEquals(Integer.valueOf(123), listing.getOffer().getId());
     assertEquals(LocalDate.now().plusDays(17), listing.getExpires());
     assertEquals(Listing.State.ACTIVE, listing.getState());
+  }
+
+  @Test
+  public void readShouldReturnEmptyWhenRepoReturnsEmpty() {
+    when(listingRepository.findById(123)).thenReturn(Optional.empty());
+    TradeService service = new TradeService(listingRepository, offerRepository);
+    Optional<Listing> result = service.read(123);
+    assertEquals(Optional.empty(), result);
+  }
+
+  @Test
+  public void readShouldNotReturnCancelledListing() {
+    Listing listing = new Listing();
+    listing.setState(Listing.State.CANCELLED);
+    listing.setExpires(LocalDate.now().plusDays(2));
+    when(listingRepository.findById(123)).thenReturn(Optional.of(listing));
+    TradeService service = new TradeService(listingRepository, offerRepository);
+    Optional<Listing> result = service.read(123);
+    assertEquals(Optional.empty(), result);
+  }
+
+  @Test
+  public void readShouldNotReturnExpiredListing() {
+    Listing listing = new Listing();
+    listing.setState(Listing.State.ACTIVE);
+    listing.setExpires(LocalDate.now().minusDays(2));
+    when(listingRepository.findById(123)).thenReturn(Optional.of(listing));
+    TradeService service = new TradeService(listingRepository, offerRepository);
+    Optional<Listing> result = service.read(123);
+    assertEquals(Optional.empty(), result);
+  }
+
+  @Test
+  public void readShouldReturnListing() {
+    Listing listing = new Listing();
+    listing.setState(Listing.State.ACTIVE);
+    listing.setExpires(LocalDate.now().plusDays(2));
+    when(listingRepository.findById(123)).thenReturn(Optional.of(listing));
+    TradeService service = new TradeService(listingRepository, offerRepository);
+    Optional<Listing> result = service.read(123);
+    assertEquals(listing, result.get());
   }
 }
