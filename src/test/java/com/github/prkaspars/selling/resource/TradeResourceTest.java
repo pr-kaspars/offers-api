@@ -1,8 +1,6 @@
 package com.github.prkaspars.selling.resource;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.github.prkaspars.selling.model.Offer;
 import com.github.prkaspars.selling.request.OfferPayload;
 import com.github.prkaspars.selling.service.TradeService;
@@ -19,7 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.Currency;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -36,7 +34,7 @@ public class TradeResourceTest {
   private TradeService tradeService;
 
   @Test
-  public void createShould() throws Exception {
+  public void createShouldCreateListingAndOffer() throws Exception {
     when(tradeService.listOffer(any(OfferPayload.class)))
       .thenAnswer(a -> {
         OfferPayload in = a.getArgument(0);
@@ -68,5 +66,25 @@ public class TradeResourceTest {
       .andExpect(jsonPath("$.description").value("Lorem ipsum"))
       .andExpect(jsonPath("$.currency").value("GBP"))
       .andExpect(jsonPath("$.price").value(89.99));
+  }
+
+  @Test
+  public void createShouldRespondWithFailures() throws Exception {
+    OfferPayload payload = new OfferPayload();
+    payload.setName("");
+    payload.setCurrency("XYZ");
+    payload.setPrice(-1.0);
+    payload.setDuration(0);
+
+    mockMvc
+      .perform(
+        post("/listings")
+          .content(objectMapper.writeValueAsBytes(payload))
+          .contentType(MediaType.APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andExpect(header().doesNotExist(HttpHeaders.LOCATION))
+      .andExpect(jsonPath("$.failures.length()").value(5));
+
+    verify(tradeService, times(0)).listOffer(any());
   }
 }
