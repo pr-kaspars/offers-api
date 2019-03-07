@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Currency;
+import java.util.List;
 import java.util.Optional;
 
 import static java.time.LocalDate.now;
@@ -51,5 +52,9 @@ public class TradeService {
       listingRepository.save(l);
     });
     return listing.isPresent();
+  }
+
+  public List<Listing> active() {
+    return listingRepository.findByStateIsAndExpiresGreaterThanEqual(Listing.State.ACTIVE, now());
   }
 }

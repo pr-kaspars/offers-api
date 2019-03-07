@@ -14,7 +14,9 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 public class TradeResource {
@@ -23,6 +25,11 @@ public class TradeResource {
   @Autowired
   public TradeResource(TradeService tradeService) {
     this.tradeService = tradeService;
+  }
+
+  @GetMapping("/listings")
+  public List<ListingResponse> active() {
+    return tradeService.active().stream().map(ListingResponse::new).collect(Collectors.toList());
   }
 
   @PostMapping("/listings")

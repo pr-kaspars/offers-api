@@ -10,7 +10,9 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.Currency;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.Assert.*;
@@ -131,5 +133,14 @@ public class TradeServiceTest {
     Listing listingSave = listingArgumentCaptor.getValue();
     assertEquals(Integer.valueOf(123), listingSave.getId());
     assertEquals(Listing.State.CANCELLED, listingSave.getState());
+  }
+
+  @Test
+  public void activeShouldQueryActiveAndUseCurrentDate() {
+    when(listingRepository.findByStateIsAndExpiresGreaterThanEqual(Listing.State.ACTIVE, LocalDate.now()))
+      .thenReturn(Collections.emptyList());
+    TradeService service = new TradeService(listingRepository, offerRepository);
+    List<Listing> listings = service.active();
+    assertEquals(Collections.emptyList(), listings);
   }
 }

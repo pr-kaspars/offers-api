@@ -17,15 +17,13 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
-import java.util.Currency;
-import java.util.Optional;
+import java.util.*;
 
 import static java.time.LocalDate.now;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @RunWith(SpringRunner.class)
@@ -180,9 +178,34 @@ public class TradeResourceTest {
         patch("/listings/123")
           .content(objectMapper.writeValueAsBytes(payload))
           .contentType(MediaType.APPLICATION_JSON))
-      .andDo(print())
       .andExpect(status().isBadRequest());
 
     verify(tradeService, times(0)).cancel(any());
+  }
+
+  @Test
+  public void activeShouldReturnEmptyList() throws Exception {
+    when(tradeService.active())
+      .thenReturn(Collections.emptyList());
+
+    mockMvc
+      .perform(get("/listings"))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.length()").value(0));
+  }
+
+  @Test
+  public void activeShouldReturnList() throws Exception {
+    List<Listing> listings = new LinkedList<>();
+    Listing listing = new Listing();
+    listing.setOffer(new Offer());
+    listings.add(listing);
+    when(tradeService.active())
+      .thenReturn(listings);
+
+    mockMvc
+      .perform(get("/listings"))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.length()").value(1));
   }
 }
