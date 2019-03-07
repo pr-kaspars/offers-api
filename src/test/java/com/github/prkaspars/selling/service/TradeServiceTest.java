@@ -13,8 +13,7 @@ import java.time.LocalDate;
 import java.util.Currency;
 import java.util.Optional;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 public class TradeServiceTest {
@@ -110,5 +109,27 @@ public class TradeServiceTest {
     TradeService service = new TradeService(listingRepository, offerRepository);
     Optional<Listing> result = service.read(123);
     assertEquals(listing, result.get());
+  }
+
+  @Test
+  public void cancelShouldReturnFalseWhenListingDoesNotExist() {
+    when(listingRepository.findById(123)).thenReturn(Optional.empty());
+    TradeService service = new TradeService(listingRepository, offerRepository);
+    assertFalse(service.cancel(123));
+    verify(listingRepository, times(0)).save(any());
+  }
+
+  @Test
+  public void cancelShouldPersistCancelledListing() {
+    ArgumentCaptor<Listing> listingArgumentCaptor = ArgumentCaptor.forClass(Listing.class);
+    Listing listing = new Listing();
+    listing.setId(123);
+    when(listingRepository.findById(123)).thenReturn(Optional.of(listing));
+    TradeService service = new TradeService(listingRepository, offerRepository);
+    assertTrue(service.cancel(123));
+    verify(listingRepository, times(1)).save(listingArgumentCaptor.capture());
+    Listing listingSave = listingArgumentCaptor.getValue();
+    assertEquals(Integer.valueOf(123), listingSave.getId());
+    assertEquals(Listing.State.CANCELLED, listingSave.getState());
   }
 }

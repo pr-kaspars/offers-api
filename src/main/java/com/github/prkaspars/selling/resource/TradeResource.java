@@ -1,6 +1,7 @@
 package com.github.prkaspars.selling.resource;
 
 import com.github.prkaspars.selling.model.Listing;
+import com.github.prkaspars.selling.request.ListingStatePayload;
 import com.github.prkaspars.selling.request.OfferPayload;
 import com.github.prkaspars.selling.response.ListingResponse;
 import com.github.prkaspars.selling.service.TradeService;
@@ -8,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.servlet.http.HttpServletResponse;
@@ -36,4 +38,13 @@ public class TradeResource {
   public Optional<ListingResponse> read(@PathVariable Integer id) {
     return tradeService.read(id).map(ListingResponse::new);
   }
+
+  @PatchMapping("/listings/{id}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void cancel(@Valid @RequestBody ListingStatePayload payload, @PathVariable Integer id) {
+    if (!tradeService.cancel(id)) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found");
+    }
+  }
+
 }

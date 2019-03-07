@@ -3,6 +3,7 @@ package com.github.prkaspars.selling.resource;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.prkaspars.selling.model.Listing;
 import com.github.prkaspars.selling.model.Offer;
+import com.github.prkaspars.selling.request.ListingStatePayload;
 import com.github.prkaspars.selling.request.OfferPayload;
 import com.github.prkaspars.selling.service.TradeService;
 import org.junit.Test;
@@ -23,8 +24,7 @@ import static java.time.LocalDate.now;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -136,5 +136,53 @@ public class TradeResourceTest {
     mockMvc
       .perform(get("/listings/123"))
       .andExpect(status().isNotFound());
+  }
+
+  @Test
+  public void cancelShouldAcceptRequest() throws Exception {
+    when(tradeService.cancel(123))
+      .thenReturn(true);
+
+    ListingStatePayload payload = new ListingStatePayload();
+    payload.setState(Listing.State.CANCELLED);
+
+    mockMvc
+      .perform(
+        patch("/listings/123")
+          .content(objectMapper.writeValueAsBytes(payload))
+          .contentType(MediaType.APPLICATION_JSON))
+      .andExpect(status().isNoContent());
+  }
+
+  @Test
+  public void cancelShouldRespondWithNotFoundWhenResourceDoesNotExist() throws Exception {
+    when(tradeService.cancel(123))
+      .thenReturn(false);
+
+    ListingStatePayload payload = new ListingStatePayload();
+    payload.setState(Listing.State.CANCELLED);
+
+    mockMvc
+      .perform(
+        patch("/listings/123")
+          .content(objectMapper.writeValueAsBytes(payload))
+          .contentType(MediaType.APPLICATION_JSON))
+      .andExpect(status().isNotFound());
+  }
+
+  @Test
+  public void cancelShouldRespondWithBadRequestWhenStatusIsNotCancelled() throws Exception {
+    ListingStatePayload payload = new ListingStatePayload();
+    payload.setState(Listing.State.ACTIVE);
+
+    mockMvc
+      .perform(
+        patch("/listings/123")
+          .content(objectMapper.writeValueAsBytes(payload))
+          .contentType(MediaType.APPLICATION_JSON))
+      .andDo(print())
+      .andExpect(status().isBadRequest());
+
+    verify(tradeService, times(0)).cancel(any());
   }
 }

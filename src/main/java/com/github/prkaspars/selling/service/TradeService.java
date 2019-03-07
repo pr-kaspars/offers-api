@@ -43,4 +43,13 @@ public class TradeService {
     return listingRepository.findById(id)
       .filter(l -> l.getState() == Listing.State.ACTIVE && l.getExpires().isAfter(now()));
   }
+
+  public Boolean cancel(Integer id) {
+    Optional<Listing> listing = listingRepository.findById(id);
+    listing.ifPresent(l -> {
+      l.setState(Listing.State.CANCELLED);
+      listingRepository.save(l);
+    });
+    return listing.isPresent();
+  }
 }
