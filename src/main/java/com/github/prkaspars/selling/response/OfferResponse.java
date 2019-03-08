@@ -5,24 +5,26 @@ import com.github.prkaspars.selling.model.Offer;
 import java.time.LocalDate;
 import java.util.Currency;
 
-public class ListingResponse {
+public class OfferResponse {
   private Integer id;
   private String name;
   private String description;
   private Currency currency;
   private Double price;
   private LocalDate expires;
+  private Offer.State state;
 
-  public ListingResponse() {
+  public OfferResponse() {
   }
 
-  public ListingResponse(Offer offer) {
+  public OfferResponse(Offer offer) {
     id = offer.getId();
     name = offer.getProduct().getName();
     description = offer.getProduct().getDescription();
     currency = offer.getProduct().getCurrency();
     price = offer.getProduct().getPrice();
     expires = offer.getExpires();
+    state = offer.getState();
   }
 
   public Integer getId() {
@@ -71,5 +73,13 @@ public class ListingResponse {
 
   public void setExpires(LocalDate expires) {
     this.expires = expires;
+  }
+
+  public Offer.State getState() {
+    return state;
+  }
+
+  public void setState(Offer.State state) {
+    this.state = state;
   }
 }
