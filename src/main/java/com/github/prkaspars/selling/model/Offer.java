@@ -1,17 +1,22 @@
 package com.github.prkaspars.selling.model;
 
 import javax.persistence.*;
-import java.util.Currency;
+import java.time.LocalDate;
 
 @Entity
-public class Offer implements Cloneable {
+public class Offer {
+  public enum State {
+    ACTIVE, CANCELLED
+  }
+
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
   private Integer id;
-  private String name;
-  private String description;
-  private Currency currency;
-  private Double price;
+  @OneToOne
+  @JoinColumn
+  private Product product;
+  private LocalDate expires;
+  private State state;
 
   public Integer getId() {
     return id;
@@ -21,35 +26,27 @@ public class Offer implements Cloneable {
     this.id = id;
   }
 
-  public String getName() {
-    return name;
+  public Product getProduct() {
+    return product;
   }
 
-  public void setName(String name) {
-    this.name = name;
+  public void setProduct(Product product) {
+    this.product = product;
   }
 
-  public String getDescription() {
-    return description;
+  public LocalDate getExpires() {
+    return expires;
   }
 
-  public void setDescription(String description) {
-    this.description = description;
+  public void setExpires(LocalDate expires) {
+    this.expires = expires;
   }
 
-  public Currency getCurrency() {
-    return currency;
+  public State getState() {
+    return state;
   }
 
-  public void setCurrency(Currency currency) {
-    this.currency = currency;
-  }
-
-  public Double getPrice() {
-    return price;
-  }
-
-  public void setPrice(Double price) {
-    this.price = price;
+  public void setState(State state) {
+    this.state = state;
   }
 }

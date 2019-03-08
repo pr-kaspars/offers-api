@@ -1,11 +1,11 @@
 package com.github.prkaspars.selling.resource;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.prkaspars.selling.model.Listing;
 import com.github.prkaspars.selling.model.Offer;
-import com.github.prkaspars.selling.request.ListingStatePayload;
-import com.github.prkaspars.selling.request.OfferPayload;
-import com.github.prkaspars.selling.service.TradeService;
+import com.github.prkaspars.selling.model.Product;
+import com.github.prkaspars.selling.request.PatchStatePayload;
+import com.github.prkaspars.selling.request.CreateOfferPayload;
+import com.github.prkaspars.selling.service.OfferService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,36 +27,36 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @RunWith(SpringRunner.class)
-@WebMvcTest(TradeResource.class)
-public class TradeResourceTest {
+@WebMvcTest(OfferResource.class)
+public class OfferResourceTest {
   private ObjectMapper objectMapper = new ObjectMapper();
 
   @Autowired
   private MockMvc mockMvc;
 
   @MockBean
-  private TradeService tradeService;
+  private OfferService service;
 
   @Test
   public void createShouldCreateListingAndOffer() throws Exception {
-    when(tradeService.list(any(OfferPayload.class)))
+    when(service.list(any(CreateOfferPayload.class)))
       .thenAnswer(a -> {
-        OfferPayload in = a.getArgument(0);
-        Offer o = new Offer();
-        o.setId(99);
-        o.setName(in.getName());
-        o.setDescription(in.getDescription());
-        o.setCurrency(Currency.getInstance(in.getCurrency()));
-        o.setPrice(in.getPrice());
-        Listing out = new Listing();
+        CreateOfferPayload in = a.getArgument(0);
+        Product p = new Product();
+        p.setId(99);
+        p.setName(in.getName());
+        p.setDescription(in.getDescription());
+        p.setCurrency(Currency.getInstance(in.getCurrency()));
+        p.setPrice(in.getPrice());
+        Offer out = new Offer();
         out.setId(123);
-        out.setState(Listing.State.ACTIVE);
+        out.setState(Offer.State.ACTIVE);
         out.setExpires(now().plusDays(in.getDuration()));
-        out.setOffer(o);
+        out.setProduct(p);
         return out;
       });
 
-    OfferPayload payload = new OfferPayload();
+    CreateOfferPayload payload = new CreateOfferPayload();
     payload.setName("Foo");
     payload.setDescription("Lorem ipsum");
     payload.setCurrency("GBP");
@@ -65,11 +65,11 @@ public class TradeResourceTest {
 
     mockMvc
       .perform(
-        post("/listings")
+        post("/offers")
           .content(objectMapper.writeValueAsBytes(payload))
           .contentType(MediaType.APPLICATION_JSON))
       .andExpect(status().isCreated())
-      .andExpect(header().string(HttpHeaders.LOCATION, "http://localhost/listings/123"))
+      .andExpect(header().string(HttpHeaders.LOCATION, "http://localhost/offers/123"))
       .andExpect(jsonPath("$.id").value(123))
       .andExpect(jsonPath("$.name").value("Foo"))
       .andExpect(jsonPath("$.description").value("Lorem ipsum"))
@@ -80,7 +80,7 @@ public class TradeResourceTest {
 
   @Test
   public void createShouldRespondWithFailures() throws Exception {
-    OfferPayload payload = new OfferPayload();
+    CreateOfferPayload payload = new CreateOfferPayload();
     payload.setName("");
     payload.setCurrency("XYZ");
     payload.setPrice(-1.0);
@@ -88,35 +88,35 @@ public class TradeResourceTest {
 
     mockMvc
       .perform(
-        post("/listings")
+        post("/offers")
           .content(objectMapper.writeValueAsBytes(payload))
           .contentType(MediaType.APPLICATION_JSON))
       .andExpect(status().isBadRequest())
       .andExpect(header().doesNotExist(HttpHeaders.LOCATION))
       .andExpect(jsonPath("$.failures.length()").value(5));
 
-    verify(tradeService, times(0)).list(any());
+    verify(service, times(0)).list(any());
   }
 
   @Test
   public void readShouldRespondWithListing() throws Exception {
+    Product product = new Product();
+    product.setName("Foo");
+    product.setDescription("Lorem ipsum");
+    product.setCurrency(Currency.getInstance("GBP"));
+    product.setPrice(89.99);
+
     Offer offer = new Offer();
-    offer.setName("Foo");
-    offer.setDescription("Lorem ipsum");
-    offer.setCurrency(Currency.getInstance("GBP"));
-    offer.setPrice(89.99);
+    offer.setId(123);
+    offer.setProduct(product);
+    offer.setState(Offer.State.ACTIVE);
+    offer.setExpires(LocalDate.now().plusDays(12));
 
-    Listing listing = new Listing();
-    listing.setId(123);
-    listing.setOffer(offer);
-    listing.setState(Listing.State.ACTIVE);
-    listing.setExpires(LocalDate.now().plusDays(12));
-
-    when(tradeService.read(123))
-      .thenReturn(Optional.of(listing));
+    when(service.read(123))
+      .thenReturn(Optional.of(offer));
 
     mockMvc
-      .perform(get("/listings/123"))
+      .perform(get("/offers/123"))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.id").value(123))
       .andExpect(jsonPath("$.name").value("Foo"))
@@ -128,25 +128,25 @@ public class TradeResourceTest {
 
   @Test
   public void readShouldRespondWithNotFound() throws Exception {
-    when(tradeService.read(123))
+    when(service.read(123))
       .thenReturn(Optional.empty());
 
     mockMvc
-      .perform(get("/listings/123"))
+      .perform(get("/offers/123"))
       .andExpect(status().isNotFound());
   }
 
   @Test
   public void cancelShouldAcceptRequest() throws Exception {
-    when(tradeService.cancel(123))
+    when(service.cancel(123))
       .thenReturn(true);
 
-    ListingStatePayload payload = new ListingStatePayload();
-    payload.setState(Listing.State.CANCELLED);
+    PatchStatePayload payload = new PatchStatePayload();
+    payload.setState(Offer.State.CANCELLED);
 
     mockMvc
       .perform(
-        patch("/listings/123")
+        patch("/offers/123")
           .content(objectMapper.writeValueAsBytes(payload))
           .contentType(MediaType.APPLICATION_JSON))
       .andExpect(status().isNoContent());
@@ -154,15 +154,15 @@ public class TradeResourceTest {
 
   @Test
   public void cancelShouldRespondWithNotFoundWhenResourceDoesNotExist() throws Exception {
-    when(tradeService.cancel(123))
+    when(service.cancel(123))
       .thenReturn(false);
 
-    ListingStatePayload payload = new ListingStatePayload();
-    payload.setState(Listing.State.CANCELLED);
+    PatchStatePayload payload = new PatchStatePayload();
+    payload.setState(Offer.State.CANCELLED);
 
     mockMvc
       .perform(
-        patch("/listings/123")
+        patch("/offers/123")
           .content(objectMapper.writeValueAsBytes(payload))
           .contentType(MediaType.APPLICATION_JSON))
       .andExpect(status().isNotFound());
@@ -170,41 +170,41 @@ public class TradeResourceTest {
 
   @Test
   public void cancelShouldRespondWithBadRequestWhenStatusIsNotCancelled() throws Exception {
-    ListingStatePayload payload = new ListingStatePayload();
-    payload.setState(Listing.State.ACTIVE);
+    PatchStatePayload payload = new PatchStatePayload();
+    payload.setState(Offer.State.ACTIVE);
 
     mockMvc
       .perform(
-        patch("/listings/123")
+        patch("/offers/123")
           .content(objectMapper.writeValueAsBytes(payload))
           .contentType(MediaType.APPLICATION_JSON))
       .andExpect(status().isBadRequest());
 
-    verify(tradeService, times(0)).cancel(any());
+    verify(service, times(0)).cancel(any());
   }
 
   @Test
   public void activeShouldReturnEmptyList() throws Exception {
-    when(tradeService.active())
+    when(service.active())
       .thenReturn(Collections.emptyList());
 
     mockMvc
-      .perform(get("/listings"))
+      .perform(get("/offers"))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.length()").value(0));
   }
 
   @Test
   public void activeShouldReturnList() throws Exception {
-    List<Listing> listings = new LinkedList<>();
-    Listing listing = new Listing();
-    listing.setOffer(new Offer());
-    listings.add(listing);
-    when(tradeService.active())
-      .thenReturn(listings);
+    List<Offer> offers = new LinkedList<>();
+    Offer offer = new Offer();
+    offer.setProduct(new Product());
+    offers.add(offer);
+    when(service.active())
+      .thenReturn(offers);
 
     mockMvc
-      .perform(get("/listings"))
+      .perform(get("/offers"))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.length()").value(1));
   }

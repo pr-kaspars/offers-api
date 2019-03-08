@@ -2,7 +2,7 @@ package com.github.prkaspars.selling.request;
 
 import javax.validation.constraints.*;
 
-public class OfferPayload {
+public class CreateOfferPayload {
   @NotEmpty
   private String name;
   @NotEmpty

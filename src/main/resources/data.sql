@@ -1,6 +1,6 @@
 insert
   into
-    offer (id, currency, description, name, price)
+    product (id, currency, description, name, price)
 values
     (1, 'GBP', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.', 'Item 1', 123.9),
     (2, 'USD', 'Vestibulum ultricies at eros vitae fermentum.', 'Item 2', 0.85),
@@ -13,7 +13,7 @@ values
 
 insert
   into
-    listing (id, expires, state, offer_id)
+    offer (id, expires, state, product_id)
 values
     (7, dateadd('DAY', 7, current_date), 0, 1),
     (8, dateadd('DAY', 7, current_date), 0, 2),

@@ -1,29 +1,17 @@
-package com.github.prkaspars.selling.response;
+package com.github.prkaspars.selling.model;
 
-import com.github.prkaspars.selling.model.Offer;
-
-import java.time.LocalDate;
+import javax.persistence.*;
 import java.util.Currency;
 
-public class ListingResponse {
+@Entity
+public class Product {
+  @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
   private Integer id;
   private String name;
   private String description;
   private Currency currency;
   private Double price;
-  private LocalDate expires;
-
-  public ListingResponse() {
-  }
-
-  public ListingResponse(Offer offer) {
-    id = offer.getId();
-    name = offer.getProduct().getName();
-    description = offer.getProduct().getDescription();
-    currency = offer.getProduct().getCurrency();
-    price = offer.getProduct().getPrice();
-    expires = offer.getExpires();
-  }
 
   public Integer getId() {
     return id;
@@ -63,13 +51,5 @@ public class ListingResponse {
 
   public void setPrice(Double price) {
     this.price = price;
-  }
-
-  public LocalDate getExpires() {
-    return expires;
-  }
-
-  public void setExpires(LocalDate expires) {
-    this.expires = expires;
   }
 }
